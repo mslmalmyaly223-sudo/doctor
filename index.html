@@ -26,26 +26,25 @@
         }
     </script>
     <style>
-        * {
+        body {
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
-        }
-        
-        input, textarea {
-            -webkit-user-select: auto;
-            -moz-user-select: auto;
-            -ms-user-select: auto;
-            user-select: auto;
-        }
-
-        body {
             overscroll-behavior-y: none;
             background-color: #f8fafc;
             overflow: hidden;
+        }
+
+        input, textarea {
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            -ms-user-select: text !important;
+            user-select: text !important;
+            cursor: text !important;
+            pointer-events: auto !important;
         }
 
         .dark body {
@@ -184,9 +183,26 @@
 <body class="text-slate-800 antialiased">
 
     <div id="loader" class="fixed inset-0 bg-white dark:bg-slate-900 z-[999] flex flex-col items-center justify-center transition-opacity duration-500">
-        <i class="fa-solid fa-tooth text-6xl text-blue-500 animate-bounce mb-4"></i>
-        <div class="text-xl font-bold dark:text-white">جاري التحميل...</div>
+        <img id="splash-image" src="" alt="Doctor" class="w-40 h-40 rounded-2xl object-cover shadow-2xl mb-4 hidden border-4 border-blue-500 animate-pulse">
+        <i id="splash-icon" class="fa-solid fa-tooth text-6xl text-blue-500 animate-bounce mb-4"></i>
+        <div id="splash-name" class="text-2xl font-bold dark:text-white text-blue-600 mt-2">جاري التحميل...</div>
     </div>
+
+    <script>
+        try {
+            const savedSplash = localStorage.getItem('my_clinic_splash');
+            if (savedSplash) {
+                const splashData = JSON.parse(savedSplash);
+                if (splashData.splashImg && splashData.splashName) {
+                    document.getElementById('splash-icon').classList.add('hidden');
+                    const img = document.getElementById('splash-image');
+                    img.src = splashData.splashImg;
+                    img.classList.remove('hidden');
+                    document.getElementById('splash-name').innerText = splashData.splashName;
+                }
+            }
+        } catch(e) {}
+    </script>
 
     <div id="welcome-screen" class="fixed inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-slate-900 dark:to-slate-800 z-[100] hidden flex-col items-center justify-center p-6">
         <div class="glass-card rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
@@ -247,6 +263,13 @@
                     </div>
                     
                     <div class="space-y-4">
+                        <div id="clinic-address-display" class="hidden bg-blue-50 dark:bg-slate-800 p-4 rounded-xl border border-blue-100 dark:border-slate-700 text-center shadow-sm">
+    <div class="flex items-center justify-center gap-2 mb-2">
+        <i class="fa-solid fa-location-dot text-blue-500 text-xl animate-bounce"></i>
+        <span class="font-bold text-gray-700 dark:text-gray-300">( عنوان العيادة )</span>
+    </div>
+    <p class="font-bold dark:text-white text-sm" id="clinic-address-text"></p>
+</div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">اسم المريض الكامل</label>
                             <input type="text" id="patient-name" class="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="اكتب اسمك هنا...">
@@ -301,7 +324,15 @@
                         <i class="fa-solid fa-chevron-left"></i>
                     </button>
 
-                     <button id="btn-logout" class="hidden w-full flex items-center justify-between p-4 glass-card rounded-2xl active:scale-95 transition-transform mt-8">
+                    <a href="https://t.me/h6w_o" target="_blank" class="w-full flex items-center justify-between p-4 glass-card rounded-2xl active:scale-95 transition-transform mt-8 border border-blue-100 dark:border-slate-700 text-blue-600 dark:text-blue-400">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-slate-800 flex items-center justify-center text-lg"><i class="fa-brands fa-telegram"></i></div>
+                            <span class="font-bold">التواصل مع الدعم</span>
+                        </div>
+                        <i class="fa-solid fa-headset"></i>
+                    </a>
+
+                    <button id="btn-logout" class="w-full flex items-center justify-between p-4 glass-card rounded-2xl active:scale-95 transition-transform mt-4">
                         <div class="flex items-center gap-4">
                             <div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-lg"><i class="fa-solid fa-right-from-bracket"></i></div>
                             <span class="font-bold text-red-500">تسجيل الخروج</span>
@@ -341,12 +372,12 @@
                 </div>
                 <h3 class="font-bold text-lg dark:text-white">كيف كانت تجربتك؟</h3>
             </div>
-            <div class="flex justify-center gap-3 mb-8 text-3xl text-gray-300" id="star-rating-container">
-                <i class="fa-solid fa-star" data-val="1"></i>
-                <i class="fa-solid fa-star" data-val="2"></i>
-                <i class="fa-solid fa-star" data-val="3"></i>
-                <i class="fa-solid fa-star" data-val="4"></i>
-                <i class="fa-solid fa-star" data-val="5"></i>
+            <div class="flex justify-center gap-3 mb-8 text-3xl" id="star-rating-container">
+                <i class="fa-solid fa-star text-gray-300 cursor-pointer transition-colors" data-val="1"></i>
+                <i class="fa-solid fa-star text-gray-300 cursor-pointer transition-colors" data-val="2"></i>
+                <i class="fa-solid fa-star text-gray-300 cursor-pointer transition-colors" data-val="3"></i>
+                <i class="fa-solid fa-star text-gray-300 cursor-pointer transition-colors" data-val="4"></i>
+                <i class="fa-solid fa-star text-gray-300 cursor-pointer transition-colors" data-val="5"></i>
             </div>
             <textarea id="rating-comment" rows="4" class="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mb-6 resize-none" placeholder="اكتب تعليقك هنا (اختياري)..."></textarea>
             <button id="btn-submit-rating" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform">إرسال التقييم</button>
@@ -358,42 +389,219 @@
             <button onclick="closeFreePage('page-admin')" class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center active:scale-95"><i class="fa-solid fa-arrow-right"></i></button>
             <h2 class="text-xl font-bold">لوحة التحكم</h2>
         </header>
-        <div class="p-6 flex-1 overflow-y-auto space-y-4 bg-gray-50 dark:bg-slate-900">
-            <button onclick="openFreePage('admin-holidays')" class="w-full flex items-center p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm active:scale-95 transition-transform border border-gray-100 dark:border-slate-700 gap-4 text-right">
-                <div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xl shrink-0"><i class="fa-regular fa-calendar-xmark"></i></div>
-                <div class="flex-1">
-                    <h3 class="font-bold text-lg dark:text-white">التحكم في التاريخ</h3>
-                    <p class="text-sm text-gray-500">تحديد أيام العطل والإجازات</p>
-                </div>
-                <i class="fa-solid fa-chevron-left text-gray-300"></i>
-            </button>
+        <div class="p-6 flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-900">
+            <!-- شبكة الأزرار 3 أعمدة مثل الصورة -->
+            <div class="grid grid-cols-3 gap-4">
+                
+                <button onclick="openFreePage('admin-today')" class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform aspect-square">
+                    <div class="w-12 h-12 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-calendar-day"></i>
+                    </div>
+                    <span class="font-bold text-[11px] dark:text-white">حجوزات اليوم</span>
+                </button>
 
-            <button onclick="openFreePage('admin-times')" class="w-full flex items-center p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm active:scale-95 transition-transform border border-gray-100 dark:border-slate-700 gap-4 text-right">
-                <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center text-xl shrink-0"><i class="fa-regular fa-clock"></i></div>
-                <div class="flex-1">
-                    <h3 class="font-bold text-lg dark:text-white">تعديل الأوقات والاستيعاب</h3>
-                    <p class="text-sm text-gray-500">ساعات الدوام وعدد المرضى لكل ساعة</p>
-                </div>
-                <i class="fa-solid fa-chevron-left text-gray-300"></i>
-            </button>
+                <button onclick="openFreePage('admin-splash')" class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform aspect-square">
+                    <div class="w-12 h-12 rounded-full bg-purple-100 text-purple-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <span class="font-bold text-[11px] dark:text-white">الإحصائيات</span>
+                </button>
 
-            <button onclick="openFreePage('admin-ratings')" class="w-full flex items-center p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm active:scale-95 transition-transform border border-gray-100 dark:border-slate-700 gap-4 text-right">
-                <div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-star-half-stroke"></i></div>
-                <div class="flex-1">
-                    <h3 class="font-bold text-lg dark:text-white">استلام التقييمات</h3>
-                    <p class="text-sm text-gray-500">رؤية تقييمات وآراء المرضى</p>
-                </div>
-                <i class="fa-solid fa-chevron-left text-gray-300"></i>
-            </button>
+                <button onclick="openFreePage('admin-loyalty')" class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform aspect-square">
+                    <div class="w-12 h-12 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-gift"></i>
+                    </div>
+                    <span class="font-bold text-[11px] dark:text-white">المكافآت</span>
+                </button>
 
-            <button onclick="openFreePage('admin-services')" class="w-full flex items-center p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm active:scale-95 transition-transform border border-gray-100 dark:border-slate-700 gap-4 text-right">
-                <div class="w-12 h-12 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-list"></i></div>
-                <div class="flex-1">
-                    <h3 class="font-bold text-lg dark:text-white">إضافة خدمات</h3>
-                    <p class="text-sm text-gray-500">تعديل أنواع الخدمات المقدمة</p>
+                <button onclick="openFreePage('admin-address')" class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform aspect-square">
+                    <div class="w-12 h-12 rounded-full bg-teal-100 text-teal-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <span class="font-bold text-[11px] dark:text-white">عنوان العيادة</span>
+                </button>
+
+                <button onclick="openFreePage('admin-subscription')" class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform aspect-square">
+                    <div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-credit-card"></i>
+                    </div>
+                    <span class="font-bold text-[11px] dark:text-white">الاشتراك</span>
+                </button>
+
+                <button onclick="openFreePage('admin-holidays')" class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform aspect-square">
+                    <div class="w-12 h-12 rounded-full bg-red-50 text-red-400 flex items-center justify-center text-xl">
+                        <i class="fa-regular fa-calendar-xmark"></i>
+                    </div>
+                    <span class="font-bold text-[11px] dark:text-white">أيام العطل</span>
+                </button>
+
+                <button onclick="openFreePage('admin-times')" class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform aspect-square">
+                    <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center text-xl">
+                        <i class="fa-regular fa-clock"></i>
+                    </div>
+                    <span class="font-bold text-[11px] dark:text-white">أوقات الدوام</span>
+                </button>
+
+                <button onclick="openFreePage('admin-ratings')" class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform aspect-square">
+                    <div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-500 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-star-half-stroke"></i>
+                    </div>
+                    <span class="font-bold text-[11px] dark:text-white">التقييمات</span>
+                </button>
+
+                <button onclick="openFreePage('admin-services')" class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform aspect-square">
+                    <div class="w-12 h-12 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-list"></i>
+                    </div>
+                    <span class="font-bold text-[11px] dark:text-white">الخدمات</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-booking-success" class="fixed inset-0 bg-black/50 z-[300] hidden flex-col items-center justify-center p-6 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl transform scale-95 transition-transform duration-300" id="modal-booking-content">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-check-double text-4xl text-green-500"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-4 dark:text-white">تم الحجز بنجاح!</h3>
+            <p class="text-red-500 font-bold mb-4 bg-red-50 dark:bg-red-900/20 p-4 rounded-xl leading-relaxed text-sm">
+                يجب الضغط على <span class="underline">وصلت</span> من قسم الحجوزات قبل قدومك إلى العيادة لضمان حجزك، ولا تنسى أن تأتي قبل نصف ساعة من الموعد.
+            </p>
+            <button onclick="closeSuccessModal()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl active:scale-95 transition-transform">حسناً، فهمت</button>
+        </div>
+    </div>
+
+    <div id="modal-qr" class="fixed inset-0 bg-black/60 z-[300] hidden items-center justify-center p-6 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl max-w-xs w-full text-center shadow-2xl relative">
+            <button onclick="closeQRModal()" class="absolute top-4 left-4 w-8 h-8 bg-gray-100 dark:bg-slate-700 rounded-full flex items-center justify-center dark:text-white"><i class="fa-solid fa-times"></i></button>
+            <h3 class="text-lg font-bold mb-6 dark:text-white">تذكرة الحجز (باركود)</h3>
+            <div class="bg-white p-2 rounded-xl inline-block mx-auto mb-4 border-2 border-gray-200">
+                <img id="qr-image" src="" alt="QR Code" class="w-48 h-48">
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">أبرز هذا الباركود عند وصولك للعيادة</p>
+        </div>
+    </div>
+
+    <div id="admin-splash" class="free-page">
+        <header class="pt-12 pb-4 px-6 flex items-center gap-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <button onclick="closeFreePage('admin-splash')" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:scale-95"><i class="fa-solid fa-arrow-right dark:text-white"></i></button>
+            <h2 class="text-xl font-bold dark:text-white">التخصيص والإحصائيات</h2>
+        </header>
+        <div class="p-6 flex-1 overflow-y-auto space-y-8">
+            <div class="bg-gray-50 dark:bg-slate-800 p-5 rounded-2xl">
+                <h3 class="font-bold mb-4 dark:text-white border-b pb-2 border-gray-200 dark:border-slate-700">صورة بداية التطبيق</h3>
+                
+                <label class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-300">اختر صورة الدكتور من الهاتف:</label>
+                <input type="file" id="setting-splash-file" accept="image/*" class="w-full p-2 mb-3 bg-white dark:bg-slate-700 rounded-xl border border-gray-200 dark:border-slate-600 text-sm">
+                
+                <!-- عرض الصورة المصغرة بعد اختيارها -->
+                <div class="flex justify-center mb-4">
+                    <img id="splash-preview" src="" class="hidden w-24 h-24 rounded-full object-cover border-2 border-blue-500 shadow-sm" alt="معاينة">
                 </div>
-                <i class="fa-solid fa-chevron-left text-gray-300"></i>
-            </button>
+
+                <input type="text" id="setting-splash-name" class="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-700 dark:text-white mb-4" placeholder="اسم الدكتور أسفل الصورة">
+                <button id="btn-save-splash" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md">حفظ التغييرات</button>
+            </div>
+            
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
+                <h3 class="font-bold mb-4 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-pie text-blue-500"></i> إحصائيات التطبيق</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl text-center">
+                        <div class="text-2xl font-black text-blue-600 mb-1" id="stat-patients">0</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">إجمالي المرضى</div>
+                    </div>
+                    <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl text-center">
+                        <div class="text-2xl font-black text-green-600 mb-1" id="stat-bookings">0</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">إجمالي الحجوزات</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-address" class="free-page">
+        <header class="pt-12 pb-4 px-6 flex items-center gap-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <button onclick="closeFreePage('admin-address')" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:scale-95"><i class="fa-solid fa-arrow-right dark:text-white"></i></button>
+            <h2 class="text-xl font-bold dark:text-white">عنوان العيادة</h2>
+        </header>
+        <div class="p-6 flex-1 overflow-y-auto">
+            <div class="bg-gray-50 dark:bg-slate-800 p-5 rounded-2xl">
+                <label class="block text-sm font-bold mb-3 dark:text-white">اكتب عنوان العيادة ليظهر في صفحة الحجز:</label>
+                <textarea id="setting-clinic-address" rows="3" class="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-700 dark:text-white mb-4 resize-none" placeholder="مثال: بغداد، المنصور، شارع 14 رمضان، عمارة الأطباء..."></textarea>
+                <button id="btn-save-address" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md">حفظ العنوان</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-subscription" class="free-page">
+        <header class="pt-12 pb-4 px-6 flex items-center gap-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <button onclick="closeFreePage('admin-subscription')" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:scale-95"><i class="fa-solid fa-arrow-right dark:text-white"></i></button>
+            <h2 class="text-xl font-bold dark:text-white">الاشتراك الشهري</h2>
+        </header>
+        <div class="p-6 flex-1 overflow-y-auto text-center">
+            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 mt-6">
+                <i class="fa-solid fa-credit-card text-4xl text-red-500"></i>
+            </div>
+            <h3 class="text-lg font-bold mb-2 dark:text-white">تجديد اشتراك التطبيق</h3>
+            <p class="text-gray-500 text-sm mb-8 px-4">يرجى تحويل مبلغ الاشتراك الشهري لضمان استمرار عمل التطبيق وقواعد البيانات بدون توقف.</p>
+            
+            <div class="bg-gray-50 dark:bg-slate-800 p-5 rounded-2xl mb-8 text-left dir-ltr relative border border-gray-200 dark:border-slate-700">
+                <span class="absolute top-2 right-4 text-xs font-bold text-gray-400">MasterCard</span>
+                <div class="text-2xl font-mono font-bold tracking-widest text-slate-800 dark:text-white mt-4 text-center">
+                    1810354082
+                </div>
+            </div>
+
+            <p class="text-sm font-bold text-blue-600 dark:text-blue-400 mb-4">بعد التحويل، يرجى إرسال صورة الإيصال (سكرين شوت) عبر التلكرام:</p>
+            <a href="https://t.me/h6w_o" target="_blank" class="block w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform">
+                <i class="fa-brands fa-telegram ml-2"></i> إرسال السكرين للمطور
+            </a>
+        </div>
+    </div>
+
+    <div id="admin-loyalty" class="free-page">
+        <header class="pt-12 pb-4 px-6 flex items-center gap-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <button onclick="closeFreePage('admin-loyalty')" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:scale-95"><i class="fa-solid fa-arrow-right dark:text-white"></i></button>
+            <h2 class="text-xl font-bold dark:text-white">نظام الحجوزات المجانية</h2>
+        </header>
+        <div class="p-6 flex-1 overflow-y-auto">
+            <div class="bg-orange-50 dark:bg-orange-900/20 p-5 rounded-2xl border border-orange-200 dark:border-orange-900/50 mb-6">
+                <p class="text-sm text-orange-800 dark:text-orange-200 leading-relaxed">
+                    فعّل هذا النظام لمنح المريض حجزاً مجانياً بعد عدد معين من الحجوزات. الحجز المجاني سيظهر لك بلون مميز في "حجوزات اليوم".
+                </p>
+            </div>
+            
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700">
+                <div class="flex items-center justify-between mb-6">
+                    <span class="font-bold dark:text-white">تفعيل نظام المكافآت</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="setting-loyalty-toggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-[100%] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-orange-500"></div>
+                    </label>
+                </div>
+                
+                <div id="loyalty-count-container" class="border-t border-gray-100 dark:border-slate-700 pt-4">
+                    <label class="block text-sm font-bold mb-2 dark:text-white">اجعل الحجز مجاني بعد كم حجز؟</label>
+                    <input type="number" id="setting-loyalty-count" min="1" class="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 dark:text-white mb-4" placeholder="مثال: 6 (يعني السابع مجاني)">
+                </div>
+                
+                <button id="btn-save-loyalty" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl shadow-md transition-colors">حفظ التغييرات</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-today" class="free-page">
+        <header class="pt-12 pb-4 px-6 flex items-center justify-between border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-10">
+            <div class="flex items-center gap-4">
+                <button onclick="closeFreePage('admin-today')" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:scale-95"><i class="fa-solid fa-arrow-right dark:text-white"></i></button>
+                <h2 class="text-xl font-bold dark:text-white">حجوزات اليوم</h2>
+            </div>
+            <div class="text-sm font-bold text-green-600 bg-green-100 px-3 py-1 rounded-lg" id="today-date-display"></div>
+        </header>
+        <div class="p-6 flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-900">
+            <div id="admin-today-list" class="space-y-4">
+                </div>
         </div>
     </div>
 
@@ -423,11 +631,23 @@
             <div class="bg-gray-50 dark:bg-slate-800 p-5 rounded-2xl space-y-5">
                 <div>
                     <label class="block text-sm font-bold mb-2 dark:text-white">يبدأ الحجز الساعة:</label>
-                    <input type="number" id="setting-start-time" min="1" max="24" class="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-700 dark:text-white" placeholder="مثال: 16 (يعني 4 عصراً)">
+                    <div class="flex gap-2">
+                        <input type="number" id="setting-start-time" min="1" max="12" class="w-2/3 p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-700 dark:text-white outline-none" placeholder="مثال: 4">
+                        <select id="setting-start-ampm" class="w-1/3 p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-700 dark:text-white outline-none font-bold">
+                            <option value="AM">صباحاً (ص)</option>
+                            <option value="PM" selected>مساءً (م)</option>
+                        </select>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-bold mb-2 dark:text-white">ينتهي الحجز الساعة:</label>
-                    <input type="number" id="setting-end-time" min="1" max="24" class="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-700 dark:text-white" placeholder="مثال: 21 (يعني 9 ليلاً)">
+                    <div class="flex gap-2">
+                        <input type="number" id="setting-end-time" min="1" max="12" class="w-2/3 p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-700 dark:text-white outline-none" placeholder="مثال: 9">
+                        <select id="setting-end-ampm" class="w-1/3 p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-700 dark:text-white outline-none font-bold">
+                            <option value="AM">صباحاً (ص)</option>
+                            <option value="PM" selected>مساءً (م)</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="pt-4 border-t border-gray-200 dark:border-slate-700">
                     <label class="block text-sm font-bold mb-2 dark:text-white">عدد المرضى المسموح لكل ساعة:</label>
@@ -504,6 +724,19 @@
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'doctor-app';
 
+        // --- الإضافة الجديدة: جلب صورة البداية من ذاكرة الهاتف فوراً ---
+        const savedSplash = localStorage.getItem('my_clinic_splash');
+        if (savedSplash) {
+            const splashData = JSON.parse(savedSplash);
+            if (splashData.splashImg && splashData.splashName) {
+                document.getElementById('splash-icon').classList.add('hidden');
+                const img = document.getElementById('splash-image');
+                img.src = splashData.splashImg;
+                img.classList.remove('hidden');
+                document.getElementById('splash-name').innerText = splashData.splashName;
+            }
+        }
+
         let currentUser = null;
         let isAdmin = false;
         let state = {
@@ -572,7 +805,6 @@
                 ui.appContainer.style.display = 'flex';
                 
                 document.getElementById('btn-admin-panel').style.display = isAdmin ? 'flex' : 'none';
-                document.getElementById('btn-logout').style.display = isAdmin ? 'flex' : 'none';
 
                 const savedServices = localStorage.getItem('my_clinic_services');
                 if (savedServices) {
@@ -655,24 +887,66 @@
                 renderServices();
                 if(isAdmin) renderAdminServices();
 
-                const setSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'general'));
+const setSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'general'));
                 if(setSnap.exists()) {
-                    state.settings = setSnap.data();
+                    state.settings = { ...state.settings, ...setSnap.data() };
+                    
+                    // تحديث ذاكرة الهاتف بالصورة والاسم حتى تظهر فوراً بالمرة القادمة
+                    localStorage.setItem('my_clinic_splash', JSON.stringify({
+                        splashImg: state.settings.splashImg,
+                        splashName: state.settings.splashName
+                    }));
+                }
+                
+                // تطبيق شاشة التحميل المخصصة
+                if(state.settings.splashImg && state.settings.splashName) {
+                    document.getElementById('splash-icon').classList.add('hidden');
+                    const img = document.getElementById('splash-image');
+                    img.src = state.settings.splashImg;
+                    img.classList.remove('hidden');
+                    document.getElementById('splash-name').innerText = state.settings.splashName;
+                }
+                // تطبيق العنوان
+                if(state.settings.address) {
+                    document.getElementById('clinic-address-text').innerText = state.settings.address;
+                    document.getElementById('clinic-address-display').classList.remove('hidden');
                 }
 
+                // 3. جلب العطل
                 const holSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'holidays'));
                 state.holidays = holSnap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                 if(isAdmin) renderAdminHolidays();
                 renderDates(); 
 
+                // 4. جلب الحجوزات
                 const bookSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'bookings'));
                 state.bookings = bookSnap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                 renderMyBookings();
                 if(state.newBooking.date) renderTimes(); 
 
+                // 5. جلب التقييمات
                 const ratSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'ratings'));
                 state.ratings = ratSnap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                 if(isAdmin) renderAdminRatings();
+
+                // === منطق إظهار التقييم بعد ساعة ===
+                const now = new Date();
+                state.bookings.filter(b => b.userId === currentUser.uid).forEach(b => {
+                    const bookDate = new Date(`${b.date}T${b.time}`);
+                    bookDate.setHours(bookDate.getHours() + 1); // زيادة ساعة على الموعد
+                    if (now > bookDate && !localStorage.getItem(`rated_${b.id}`)) {
+                        openFreePage('page-rating');
+                        localStorage.setItem(`rated_${b.id}`, 'true'); 
+                    }
+                });
+
+                // === تحديث الإحصائيات (للمالك) ===
+                if(isAdmin) {
+                    document.getElementById('stat-bookings').innerText = state.bookings.length;
+                    const uniquePatients = new Set(state.bookings.map(b => b.userId)).size;
+                    document.getElementById('stat-patients').innerText = uniquePatients;
+                    renderTodayBookings();
+                }
 
             } catch (error) {
                 console.error(error);
@@ -716,11 +990,21 @@
             }
             state.services.forEach(srv => {
                 const btn = document.createElement('button');
-                btn.className = 'service-btn p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold active:scale-95 transition-all flex flex-col items-center justify-center gap-1';
+                // ضفنا كلاسات أساسية يسهل إزالتها عند التحديد
+                btn.className = 'service-btn p-3 rounded-xl border border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-800 font-bold active:scale-95 transition-all flex flex-col items-center justify-center gap-1';
                 btn.innerHTML = `<i class="fa-solid fa-tooth text-lg text-blue-400"></i><span class="text-sm dark:text-white">${srv.name}</span>`;
+                
                 btn.onclick = () => {
-                    document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-slate-700'));
-                    btn.classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-slate-700');
+                    // 1. نرجع كل الأزرار لشكلها الطبيعي (غير محدد)
+                    document.querySelectorAll('.service-btn').forEach(b => {
+                        b.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600', 'ring-2', 'ring-blue-300');
+                        b.classList.add('border-gray-200', 'bg-white', 'dark:border-slate-700', 'dark:bg-slate-800');
+                    });
+                    
+                    // 2. نميز الزر المحدّد ونشيل منه الشكل الطبيعي
+                    btn.classList.remove('border-gray-200', 'bg-white', 'dark:border-slate-700', 'dark:bg-slate-800');
+                    btn.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-600', 'ring-2', 'ring-blue-300');
+                    
                     state.newBooking.service = srv.name;
                     checkSelectionComplete(); 
                 };
@@ -854,6 +1138,7 @@
                     time: state.newBooking.time,
                     name: name,
                     phone: phone,
+                    status: 'قيد الانتظار', // إضافة حالة القدوم
                     createdAt: serverTimestamp()
                 });
                 
@@ -864,11 +1149,21 @@
                     date: state.newBooking.date,
                     time: state.newBooking.time,
                     name: name,
-                    phone: phone
+                    phone: phone,
+                    status: 'قيد الانتظار',
+                    createdAt: { seconds: Math.floor(Date.now() / 1000) } // توقيت وهمي للترتيب المحلي
                 });
                 renderMyBookings();
+                if(isAdmin) renderTodayBookings();
 
-                showToast("تم الحجز بنجاح!");
+                // بدلاً من التوست، نظهر النافذة الكبيرة
+                const modal = document.getElementById('modal-booking-success');
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    document.getElementById('modal-booking-content').classList.remove('scale-95');
+                }, 10);
                 
                 document.getElementById('nav-bookings-btn').classList.add('has-notification');
                 
@@ -936,9 +1231,17 @@
                         <p><strong>الاسم:</strong> ${b.name}</p>
                         <p><strong>الهاتف:</strong> ${b.phone}</p>
                     </div>
-                    <button onclick="cancelBooking('${b.id}')" class="w-full text-red-500 text-sm font-bold py-2 border border-red-200 dark:border-red-900/30 rounded-xl active:bg-red-50 dark:active:bg-red-900/20 transition-colors">
-                        إلغاء الحجز
-                    </button>
+                    <div class="flex gap-2 mt-3 pl-2 pr-2">
+                        <button onclick="showQRCode('${b.name}', '${b.service}', '${b.date}', '${displayTime}')" class="w-12 shrink-0 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 rounded-xl flex items-center justify-center active:scale-95 transition-transform border border-gray-200 dark:border-slate-600">
+                            <i class="fa-solid fa-qrcode text-lg"></i>
+                        </button>
+                        <button onclick="markArrived('${b.id}')" class="${b.status === 'arrived' ? 'bg-green-500 text-white border-green-500' : 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-900/30'} flex-1 text-sm font-bold py-2 border rounded-xl active:scale-95 transition-all flex items-center justify-center gap-2">
+                            ${b.status === 'arrived' ? '<i class="fa-solid fa-check"></i> أنت في الطريق' : 'وصلت'}
+                        </button>
+                        <button onclick="cancelBooking('${b.id}')" class="flex-1 text-red-500 text-sm font-bold py-2 border border-red-200 dark:border-red-900/30 rounded-xl active:bg-red-50 dark:active:bg-red-900/20 transition-colors">
+                            إلغاء
+                        </button>
+                    </div>
                 `;
                 container.appendChild(card);
             });
@@ -947,12 +1250,15 @@
         let currentRating = 0;
         document.querySelectorAll('#star-rating-container i').forEach(star => {
             star.addEventListener('click', (e) => {
-                currentRating = parseInt(e.target.dataset.val);
+                // نستخدم currentTarget حتى نضمن انه ده يستهدف النجمة بالضبط
+                currentRating = parseInt(e.currentTarget.dataset.val);
                 document.querySelectorAll('#star-rating-container i').forEach(s => {
                     if(parseInt(s.dataset.val) <= currentRating) {
-                        s.classList.replace('text-gray-300', 'text-yellow-400');
+                        s.classList.remove('text-gray-300');
+                        s.classList.add('text-yellow-400');
                     } else {
-                        s.classList.replace('text-yellow-400', 'text-gray-300');
+                        s.classList.remove('text-yellow-400');
+                        s.classList.add('text-gray-300');
                     }
                 });
             });
@@ -1039,9 +1345,21 @@
         };
 
         document.getElementById('btn-save-settings').onclick = async () => {
-            const start = document.getElementById('setting-start-time').value;
-            const end = document.getElementById('setting-end-time').value;
+            let startVal = parseInt(document.getElementById('setting-start-time').value);
+            let startAmPm = document.getElementById('setting-start-ampm').value;
+            let endVal = parseInt(document.getElementById('setting-end-time').value);
+            let endAmPm = document.getElementById('setting-end-ampm').value;
             const max = document.getElementById('setting-max-per-slot').value;
+
+            // برمجة للتحويل الذكي حتى التطبيق يشتغل بدون أي أخطاء
+            let start = startVal;
+            if (startAmPm === 'PM' && start !== 12) start += 12;
+            if (startAmPm === 'AM' && start === 12) start = 0;
+
+            let end = endVal;
+            if (endAmPm === 'PM' && end !== 12) end += 12;
+            if (endAmPm === 'AM' && end === 12) end = 0;
+
             try {
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'general'), {
                     startTime: Number(start),
@@ -1053,8 +1371,17 @@
         };
 
         document.querySelector('[onclick="openFreePage(\'admin-times\')"]').addEventListener('click', () => {
-            document.getElementById('setting-start-time').value = state.settings.startTime || 16;
-            document.getElementById('setting-end-time').value = state.settings.endTime || 21;
+            let sTime = state.settings.startTime || 16;
+            let eTime = state.settings.endTime || 21;
+
+            // ترتيب وقت البداية
+            document.getElementById('setting-start-ampm').value = sTime >= 12 ? 'PM' : 'AM';
+            document.getElementById('setting-start-time').value = sTime > 12 ? sTime - 12 : (sTime === 0 ? 12 : sTime);
+
+            // ترتيب وقت النهاية
+            document.getElementById('setting-end-ampm').value = eTime >= 12 ? 'PM' : 'AM';
+            document.getElementById('setting-end-time').value = eTime > 12 ? eTime - 12 : (eTime === 0 ? 12 : eTime);
+
             document.getElementById('setting-max-per-slot').value = state.settings.maxPerSlot || 6;
         });
 
@@ -1087,6 +1414,218 @@
             
             const avg = (sum / state.ratings.length).toFixed(1);
             document.getElementById('avg-rating-text').innerText = avg;
+        }
+        
+        
+        // إغلاق النوافذ
+        window.closeSuccessModal = () => {
+            const modal = document.getElementById('modal-booking-success');
+            modal.classList.add('opacity-0');
+            document.getElementById('modal-booking-content').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+            }, 300);
+        };
+        window.closeQRModal = () => {
+    const modal = document.getElementById('modal-qr');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+};
+
+window.showQRCode = (name, service, date, time) => {
+    const qrData = encodeURIComponent(`المريض: ${name}\nالخدمة: ${service}\nالتاريخ: ${date}\nالوقت: ${time}`);
+    document.getElementById('qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
+    const modal = document.getElementById('modal-qr');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+};
+
+        // دالة الضغط على "وصلت"
+        window.markArrived = async (id) => {
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'bookings', id), { status: 'arrived' }, { merge: true });
+                // تحديث محلي
+                const idx = state.bookings.findIndex(b => b.id === id);
+                if(idx > -1) state.bookings[idx].status = 'arrived';
+                renderMyBookings();
+                showToast("تم إرسال إشعار بوصولك للمالك");
+            } catch(e) { showToast("خطأ", false); }
+        };
+
+// متغير عالمي لحفظ الصورة المضغوطة
+        let compressedImageBase64 = '';
+
+        // دالة ضغط الصورة عند اختيارها من الهاتف
+        document.getElementById('setting-splash-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_SIZE = 300; 
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+                    } else {
+                        if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // تحويل الصورة المضغوطة إلى نص Base64 بجودة 70%
+                    compressedImageBase64 = canvas.toDataURL('image/jpeg', 0.7); 
+                    
+                    // إظهار المعاينة
+                    const preview = document.getElementById('splash-preview');
+                    preview.src = compressedImageBase64;
+                    preview.classList.remove('hidden');
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
+
+// دوال حفظ الإعدادات للمالك
+        document.getElementById('btn-save-splash').onclick = async () => {
+            const name = document.getElementById('setting-splash-name').value;
+            const finalImg = compressedImageBase64 !== '' ? compressedImageBase64 : state.settings.splashImg;
+            
+            try {
+                const btn = document.getElementById('btn-save-splash');
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+                
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'general'), { splashImg: finalImg, splashName: name }, { merge: true });
+                
+                // حفظ التغييرات بذاكرة هاتف المالك فوراً حتى تظهر من يسوي ريفرش
+                localStorage.setItem('my_clinic_splash', JSON.stringify({
+                    splashImg: finalImg,
+                    splashName: name
+                }));
+
+                showToast("تم الحفظ بنجاح (يرجى التحديث لرؤية النتيجة)");
+                btn.innerHTML = 'حفظ التغييرات';
+            } catch(e) {
+                showToast("خطأ في الحفظ", false);
+                document.getElementById('btn-save-splash').innerHTML = 'حفظ التغييرات';
+            }
+        };
+
+        document.getElementById('btn-save-address').onclick = async () => {
+            const addr = document.getElementById('setting-clinic-address').value;
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'general'), { address: addr }, { merge: true });
+                document.getElementById('clinic-address-text').innerText = addr;
+                document.getElementById('clinic-address-display').classList.remove('hidden');
+                showToast("تم حفظ العنوان");
+            } catch(e) {showToast("خطأ", false)}
+        };
+
+        document.getElementById('btn-save-loyalty').onclick = async () => {
+            const enabled = document.getElementById('setting-loyalty-toggle').checked;
+            const count = document.getElementById('setting-loyalty-count').value;
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'general'), { loyaltyEnabled: enabled, loyaltyCount: Number(count) }, { merge: true });
+                state.settings.loyaltyEnabled = enabled;
+                state.settings.loyaltyCount = Number(count);
+                showToast("تم حفظ نظام المكافآت");
+                renderTodayBookings();
+            } catch(e) {showToast("خطأ", false)}
+        };
+
+        // تعبئة البيانات عند فتح الصفحات
+        document.querySelector('[onclick="openFreePage(\'admin-splash\')"]').addEventListener('click', () => {
+            document.getElementById('setting-splash-name').value = state.settings.splashName || '';
+            const preview = document.getElementById('splash-preview');
+            if (state.settings.splashImg) {
+                preview.src = state.settings.splashImg;
+                preview.classList.remove('hidden');
+                compressedImageBase64 = state.settings.splashImg; 
+            } else {
+                preview.classList.add('hidden');
+            }
+        });
+
+        document.querySelector('[onclick="openFreePage(\'admin-address\')"]').addEventListener('click', () => {
+            document.getElementById('setting-clinic-address').value = state.settings.address || '';
+        });
+
+        document.querySelector('[onclick="openFreePage(\'admin-loyalty\')"]').addEventListener('click', () => {
+            document.getElementById('setting-loyalty-toggle').checked = state.settings.loyaltyEnabled || false;
+            document.getElementById('setting-loyalty-count').value = state.settings.loyaltyCount || '';
+        });
+
+        // دالة جلب وعرض حجوزات اليوم للمالك
+        function renderTodayBookings() {
+            if(!isAdmin) return;
+            const list = document.getElementById('admin-today-list');
+            const today = new Date().toISOString().split('T')[0];
+            
+            // تصفية وترتيب (الأحدث أولاً)
+            const todayBookings = state.bookings
+                .filter(b => b.date === today)
+                .sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds);
+
+            document.getElementById('today-date-display').innerText = today;
+            list.innerHTML = '';
+
+            if(todayBookings.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-500 py-10 mt-10">لا توجد حجوزات لهذا اليوم.</p>';
+                return;
+            }
+
+            todayBookings.forEach(b => {
+                // حساب إذا كان الحجز مجاني
+                let isFree = false;
+                if(state.settings.loyaltyEnabled && state.settings.loyaltyCount) {
+                    const threshold = parseInt(state.settings.loyaltyCount);
+                    // جلب كل حجوزات هذا المريض ترتيباً تاريخياً
+                    const userBookings = state.bookings.filter(ub => ub.userId === b.userId).sort((x, y) => x.createdAt?.seconds - y.createdAt?.seconds);
+                    const bookingIndex = userBookings.findIndex(ub => ub.id === b.id);
+                    // مثلا لو كتب 6 (السابع مجاني)، نتحقق من القسمة
+                    if((bookingIndex + 1) % (threshold + 1) === 0) {
+                        isFree = true;
+                    }
+                }
+
+                const hour = parseInt(b.time.split(':')[0]);
+                const displayTime = hour > 12 ? `${hour-12}:00 م` : (hour === 12 ? `12:00 م` : `${hour}:00 ص`);
+                
+                let statusBadge = '<span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md">قيد الانتظار</span>';
+                if(b.status === 'arrived') statusBadge = '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-md"><i class="fa-solid fa-person-walking-arrow-right"></i> قادم / وصل</span>';
+
+                list.innerHTML += `
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
+                        ${isFree ? '<div class="absolute top-4 left-[-30px] bg-orange-500 text-white text-[10px] font-bold px-8 py-1 transform -rotate-45 shadow-md">مجاني</div>' : ''}
+                        
+                        <div class="flex justify-between items-start mb-2 ${isFree ? 'pl-8' : ''}">
+                            <div class="font-bold text-lg dark:text-white text-blue-700">${b.name}</div>
+                            <div class="text-left">
+                                <div class="font-bold text-slate-800 dark:text-gray-200 dir-ltr">${displayTime}</div>
+                                <div class="text-[10px] text-gray-400">الوقت الدقيق</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center bg-gray-50 dark:bg-slate-700/50 p-2 rounded-lg mb-3">
+                            <span class="text-sm dark:text-gray-300 font-bold">${b.service}</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400 dir-ltr">${b.phone}</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            ${statusBadge}
+                            ${isFree ? '<span class="text-xs text-orange-500 font-bold"><i class="fa-solid fa-gift"></i> مكافأة حجز مجاني</span>' : '<span class="text-xs text-gray-400">حجز مدفوع</span>'}
+                        </div>
+                    </div>
+                `;
+            });
         }
 
     </script>
