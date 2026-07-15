@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="light">
+<head>
+    <meta charset="UTF-8">
+    <!-- منع التكبير والتصغير وتثبيت التطبيق -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تطبيق عيادة الأسنان</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Tajawal', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#3b82f6', // أزرق مريح
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* منع النسخ والتحديد نهائياً */
+        * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation; /* تحسين اللمس */
+        }
+        
+        /* السماح بالكتابة داخل الحقول فقط */
+        input, textarea {
+            -webkit-user-select: auto;
+            -moz-user-select: auto;
+            -ms-user-select: auto;
+            user-select: auto;
+        }
+
+        body {
+            overscroll-behavior-y: none; /* منع السحب للتحديث أو ظهور خلفية المتصفح */
+            background-color: #f8fafc;
+            overflow: hidden; /* لمنع التمرير العام للصفحة */
+        }
+
+        .dark body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+
+        /* حاوية التطبيق الرئيسية */
+        #app-container {
+            height: 100dvh; /* استخدام dvh ليتناسب مع شاشات الموبايل بدقة */
+            display: flex;
+            flex-direction: column;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        .dark #app-container {
+            background: #0f172a;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* منطقة المحتوى القابلة للتمرير */
+        #main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 90px; /* مساحة للشريط السفلي */
+            /* إخفاء شريط التمرير بجمالية */
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+        #main-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* الشريط السفلي الزجاجي */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            z-index: 50;
+            padding-bottom: env(safe-area-inset-bottom); /* لآيفون */
+        }
+
+        .dark .bottom-nav {
+            background: rgba(30, 41, 59, 0.85);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* إخفاء الشريط السفلي عند فتح الكيبورد (عندما يقل ارتفاع الشاشة) */
+        @media (max-height: 500px) {
+            .bottom-nav {
+                display: none !important;
+            }
+        }
+
+        /* حركات التنقل */
+        .page-transition {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* تصميم البطاقات والعناصر */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .dark .glass-card {
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .date-btn.selected {
+            background-color: #3b82f6;
+            color: white;
+            transform: scale(1.05);
+            border-color: #3b82f6;
+        }
+        .time-btn.selected {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .time-btn:disabled {
+            opacity: 0.5;
+            background-color: #e2e8f0;
+            color: #94a3b8;
+            border-color: transparent;
+            cursor: not-allowed;
+        }
+        .dark .time-btn:disabled {
+            background-color: #334155;
+            color: #64748b;
+        }
+
+        /* نقطة الإشعارات الحمراء */
+        .notification-dot {
+            position: absolute;
+            top: -2px;
+            right: 25%;
+            width: 8px;
+            height: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            display: none;
+        }
+        .has-notification .notification-dot {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* نافذة حرة (ملء الشاشة) */
+        .free-page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+        }
+        .dark .free-page {
+            background: #0f172a;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+    <!-- شاشة التحميل -->
+    <div id="loader" class="fixed inset-0 bg-white dark:bg-slate-900 z-[999] flex flex-col items-center justify-center transition-opacity duration-500">
+        <i class="fa-solid fa-tooth text-6xl text-blue-500 animate-bounce mb-4"></i>
+        <div class="text-xl font-bold dark:text-white">جاري التحميل...</div>
+    </div>
+
+    <!-- شاشة التأكيد (تسجيل الدخول المخفي) -->
+    <div id="welcome-screen" class="fixed inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-slate-900 dark:to-slate-800 z-[100] hidden flex-col items-center justify-center p-6">
+        <div class="glass-card rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div class="w-24 h-24 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <i class="fa-solid fa-tooth text-5xl text-blue-500 dark:text-blue-300"></i>
+            </div>
+            <h1 class="text-2xl font-bold mb-4 dark:text-white">مرحباً بك في العيادة</h1>
+            <p class="text-gray-600 dark:text-gray-300 mb-8 font-medium">هل ترغب في حجز موعد لدينا؟</p>
+            <button id="btn-yes-book" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-2xl transition-all transform active:scale-95 shadow-lg flex items-center justify-center gap-2 text-lg">
+                <span>نعم، أرغب بالحجز</span>
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- الحاوية الرئيسية للتطبيق -->
+    <div id="app-container" class="hidden">
+        
+        <!-- الهيدر -->
+        <header class="pt-6 pb-3 px-4 flex justify-between items-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 border-b border-gray-100 dark:border-slate-800">
+            <div>
+                <h2 id="header-title" class="text-xl font-bold dark:text-white">حجز موعد</h2>
+                <p id="header-subtitle" class="text-xs text-gray-500 dark:text-gray-400">احجز موعدك بسهولة</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-blue-500">
+                <i class="fa-solid fa-tooth text-xl"></i>
+            </div>
+            <!-- زر مخفي لدخول المالك -->
+            <div id="hidden-admin-btn" class="absolute top-2 left-2 w-10 h-10 opacity-0 cursor-default"></div>
+        </header>
+
+        <!-- المحتوى المتغير -->
+        <main id="main-content" class="p-6 relative">
+            
+            <!-- قسم 1: حجز موعد -->
+            <div id="tab-book" class="page-transition">
+                <!-- الخطوة 1: اختيار الخدمة -->
+                <!-- الخطوة 1 و 2 مدموجات (الخدمة، التاريخ، الوقت) -->
+                <div id="step-1-and-2" class="page-transition">
+                    <!-- الخدمات -->
+                    <h3 class="text-lg font-bold mb-4 dark:text-white">اختر نوع الخدمة</h3>
+                    <div id="services-grid" class="grid grid-cols-3 gap-3 mb-6">
+                        </div>
+
+                    <!-- التاريخ -->
+                    <h3 class="text-lg font-bold mb-4 dark:text-white">اختر التاريخ</h3>
+                    <div class="flex overflow-x-auto gap-3 pb-4 hide-scrollbar" id="dates-container">
+                        <!-- Dates loaded dynamically -->
+                    </div>
+
+                    <!-- حالة اليوم (متاح/عطلة/ممتلئ) -->
+                    <div id="day-status-msg" class="text-center py-4 text-red-500 font-bold hidden bg-red-50 dark:bg-red-900/20 rounded-xl mb-4"></div>
+
+                    <!-- الوقت -->
+                    <div id="time-selection-area" class="hidden">
+                        <h3 class="text-lg font-bold mt-2 mb-4 dark:text-white">اختر الوقت</h3>
+                        <div id="times-grid" class="grid grid-cols-3 gap-3">
+                            <!-- Times loaded dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- زر التالي (مغلق مبدئياً) -->
+                    <button id="btn-next-step3" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl mt-8 shadow-lg active:scale-95 transition-transform opacity-50 cursor-not-allowed pointer-events-none">
+                        الرجاء اختيار الخدمة والتاريخ والوقت
+                    </button>
+                </div>
+
+                <!-- الخطوة 3: معلومات المريض -->
+                <div id="step-3" class="hidden mt-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold dark:text-white">بيانات المريض</h3>
+                        <button id="btn-back-step2" class="text-sm text-blue-500 flex items-center gap-1"><i class="fa-solid fa-rotate-right"></i> رجوع</button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">اسم المريض الكامل</label>
+                            <input type="text" id="patient-name" class="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="اكتب اسمك هنا...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">رقم الهاتف</label>
+                            <input type="tel" id="patient-phone" class="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="07...">
+                        </div>
+                    </div>
+
+                    <button id="btn-confirm-book" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl mt-8 shadow-lg active:scale-95 transition-transform flex justify-center items-center gap-2">
+                        <span>تأكيد الحجز</span>
+                        <i class="fa-solid fa-check-circle"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- قسم 2: الحجوزات -->
+            <div id="tab-bookings" class="hidden page-transition">
+                <div id="my-bookings-container" class="space-y-4">
+                    <!-- Bookings dynamically loaded -->
+                    <div class="text-center py-10 text-gray-500 dark:text-gray-400">
+                        <i class="fa-regular fa-calendar-xmark text-4xl mb-3 opacity-50"></i>
+                        <p>لا توجد حجوزات حالياً</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- قسم 3: الإعدادات -->
+            <div id="tab-settings" class="hidden page-transition">
+                <div class="space-y-4">
+                    <!-- التقييم -->
+                    <button onclick="openFreePage('page-rating')" class="w-full flex items-center justify-between p-4 glass-card rounded-2xl active:scale-95 transition-transform">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-500 flex items-center justify-center text-lg"><i class="fa-solid fa-star"></i></div>
+                            <span class="font-bold dark:text-white">تقييم الدكتور</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-left text-gray-400"></i>
+                    </button>
+
+                    <!-- تبديل الثيم -->
+                    <button id="btn-toggle-theme" class="w-full flex items-center justify-between p-4 glass-card rounded-2xl active:scale-95 transition-transform">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-500 flex items-center justify-center text-lg" id="theme-icon-container"><i class="fa-solid fa-moon"></i></div>
+                            <span class="font-bold dark:text-white" id="theme-text">الوضع الليلي</span>
+                        </div>
+                        <div class="w-12 h-6 bg-gray-200 rounded-full relative transition-colors duration-300" id="theme-toggle-bg">
+                            <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 transition-transform duration-300" id="theme-toggle-knob"></div>
+                        </div>
+                    </button>
+
+                    <!-- زر لوحة التحكم (يظهر للمالك فقط) -->
+                    <button id="btn-admin-panel" onclick="openFreePage('page-admin')" class="hidden w-full flex items-center justify-between p-4 glass-card rounded-2xl bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg active:scale-95 transition-transform mt-8 border-none">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg"><i class="fa-solid fa-crown"></i></div>
+                            <span class="font-bold">لوحة التحكم (المالك)</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                    <!-- تسجيل الخروج (مخفي للمرضى، يظهر للمالك فقط أو لغرض التبديل) -->
+                     <button id="btn-logout" class="hidden w-full flex items-center justify-between p-4 glass-card rounded-2xl active:scale-95 transition-transform mt-8">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-lg"><i class="fa-solid fa-right-from-bracket"></i></div>
+                            <span class="font-bold text-red-500">تسجيل الخروج</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- الشريط السفلي -->
+        <nav class="bottom-nav pb-4 pt-2 px-6 flex justify-between items-center rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+            <button class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-blue-600" data-target="tab-book">
+                <i class="fa-solid fa-calendar-plus text-xl mb-1"></i>
+                <span class="text-xs font-bold">حجز موعد</span>
+            </button>
+            <button class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500 relative" data-target="tab-bookings" id="nav-bookings-btn">
+                <div class="notification-dot"></div>
+                <i class="fa-solid fa-list-check text-xl mb-1"></i>
+                <span class="text-xs font-bold">الحجوزات</span>
+            </button>
+            <button class="nav-item flex-1 flex flex-col items-center justify-center gap-1 text-gray-400 dark:text-gray-500" data-target="tab-settings">
+                <i class="fa-solid fa-gear text-xl mb-1"></i>
+                <span class="text-xs font-bold">الإعدادات</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- ================== الصفحات الحرة (ملء الشاشة) ================== -->
+
+    <!-- صفحة التقييم -->
+    <div id="page-rating" class="free-page">
+        <header class="pt-12 pb-4 px-6 flex items-center gap-4 border-b border-gray-100 dark:border-slate-800">
+            <button onclick="closeFreePage('page-rating')" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:scale-95"><i class="fa-solid fa-arrow-right dark:text-white"></i></button>
+            <h2 class="text-xl font-bold dark:text-white">تقييم الدكتور</h2>
+        </header>
+        <div class="p-6 flex-1 overflow-y-auto">
+            <div class="text-center mb-8">
+                <div class="w-24 h-24 bg-blue-100 rounded-full mx-auto flex items-center justify-center mb-4">
+                    <i class="fa-solid fa-user-doctor text-4xl text-blue-500"></i>
+                </div>
+                <h3 class="font-bold text-lg dark:text-white">كيف كانت تجربتك؟</h3>
+            </div>
+            <div class="flex justify-center gap-3 mb-8 text-3xl text-gray-300" id="star-rating-container">
+                <i class="fa-solid fa-star" data-val="1"></i>
+                <i class="fa-solid fa-star" data-val="2"></i>
+                <i class="fa-solid fa-star" data-val="3"></i>
+                <i class="fa-solid fa-star" data-val="4"></i>
+                <i class="fa-solid fa-star" data-val="5"></i>
+            </div>
+            <textarea id="rating-comment" rows="4" class="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mb-6 resize-none" placeholder="اكتب تعليقك هنا (اختياري)..."></textarea>
+            <button id="btn-submit-rating" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform">إرسال التقييم</button>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم الرئيسية -->
+    <div id="page-admin" class="free-page">
+        <header class="pt-12 pb-4 px-6 flex items-center gap-4 bg-blue-600 text-white">
+            <button onclick="closeFreePage('page-admin')" class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center active:scale-95"><i class="fa-solid fa-arrow-right"></i></button>
+            <h2 class="text-xl font-bold">لوحة التحكم</h2>
+        </header>
+        <div class="p-6 flex-1 overflow-y-auto space-y-4 bg-gray-50 dark:bg-slate-900">
+            <!-- أزرار لوحة التحكم الأربعة -->
+            <button onclick="openFreePage('admin-holidays')" class="w-full flex items-center p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm active:scale-95 transition-transform border border-gray-100 dark:border-slate-700 gap-4 text-right">
+                <div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xl shrink-0"><i class="fa-regular fa-calendar-xmark"></i></div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg dark:text-white">التحكم في التاريخ</h3>
+                    <p class="text-sm text-gray-500">تحديد أيام العطل والإجازات</p>
+                </div>
+                <i class="fa-solid fa-chevron-left text-gray-300"></i>
+            </button>
+
+            <button onclick="openFreePage('admin-times')" class="w-full flex items-center p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm active:scale-95 transition-transform border border-gray-100 dark:border-slate-700 gap-4 text-right">
+                <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center text-xl shrink-0"><i class="fa-regular fa-clock"></i></div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg dark:text-white">تعديل الأوقات والاستيعاب</h3>
+                    <p class="text-sm text-gray-500">ساعات الدوام وعدد المرضى لكل ساعة</p>
+                </div>
+                <i class="fa-solid fa-chevron-left text-gray-300"></i>
+            </button>
+
+            <button onclick="openFreePage('admin-ratings')" class="w-full flex items-center p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm active:scale-95 transition-transform border border-gray-100 dark:border-slate-700 gap-4 text-right">
+                <div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-star-half-stroke"></i></div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg dark:text-white">استلام التقييمات</h3>
+                    <p class="text-sm text-gray-500">رؤية تقييمات وآراء المرضى</p>
+                </div>
+                <i class="fa-solid fa-chevron-left text-gray-300"></i>
+            </button>
+
+            <button onclick="openFreePage('admin-services')" class="w-full flex items-center p-5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm active:scale-95 transition-transform border border-gray-100 dark:border-slate-700 gap-4 text-right">
+                <div class="w-12 h-12 rounded-full bg-green-100 text-green-500 flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-list"></i></div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg dark:text-white">إضافة خدمات</h3>
+                    <p class="text-sm text-gray-500">تعديل أنواع الخدمات المقدمة</p>
+                </div>
+                <i class="fa-solid fa-chevron-left text-gray-300"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم: العطل -->
+    <div id="admin-holidays" class="free-page">
+        <header class="pt-12 pb-4 px-6 flex items-center gap-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <button onclick="closeFreePage('admin-holidays')" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:scale-95"><i class="fa-solid fa-arrow-right dark:text-white"></i></button>
+            <h2 class="text-xl font-bold dark:text-white">التحكم في التاريخ</h2>
+        </header>
+        <div class="p-6 flex-1 overflow-y-auto">
+            <div class="bg-gray-50 dark:bg-slate-800 p-4 rounded-2xl mb-6">
+                <label class="block text-sm font-bold mb-2 dark:text-white">اختر يوماً لجعله عطلة</label>
+                <input type="date" id="holiday-date" class="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-700 mb-3 bg-white dark:bg-slate-700 dark:text-white">
+                <input type="text" id="holiday-note" placeholder="ملاحظة (مثال: عطلة رسمية)" class="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-700 mb-4 bg-white dark:bg-slate-700 dark:text-white">
+                <button id="btn-add-holiday" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md">حفظ العطلة</button>
+            </div>
+            <h3 class="font-bold mb-3 dark:text-white">أيام العطل المسجلة:</h3>
+            <div id="holidays-list" class="space-y-3"></div>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم: الأوقات -->
+    <div id="admin-times" class="free-page">
+        <header class="pt-12 pb-4 px-6 flex items-center gap-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <button onclick="closeFreePage('admin-times')" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:scale-95"><i class="fa-solid fa-arrow-right dark:text-white"></i></button>
+            <h2 class="text-xl font-bold dark:text-white">تعديل الأوقات</h2>
+        </header>
+        <div class="p-6 flex-1 overflow-y-auto">
+            <div class="bg-gray-50 dark:bg-slate-800 p-5 rounded-2xl space-y-5">
+                <div>
+                    <label class="block text-sm font-bold mb-2 dark:text-white">يبدأ الحجز الساعة:</label>
+                    <input type="number" id="setting-start-time" min="1" max="24" class="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-700 dark:text-white" placeholder="مثال: 16 (يعني 4 عصراً)">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-2 dark:text-white">ينتهي الحجز الساعة:</label>
+                    <input type="number" id="setting-end-time" min="1" max="24" class="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-700 dark:text-white" placeholder="مثال: 21 (يعني 9 ليلاً)">
+                </div>
+                <div class="pt-4 border-t border-gray-200 dark:border-slate-700">
+                    <label class="block text-sm font-bold mb-2 dark:text-white">عدد المرضى المسموح لكل ساعة:</label>
+                    <input type="number" id="setting-max-per-slot" min="1" class="w-full p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-700 dark:text-white" placeholder="مثال: 6">
+                </div>
+                <button id="btn-save-settings" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md mt-4">حفظ الإعدادات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم: التقييمات -->
+    <div id="admin-ratings" class="free-page">
+        <header class="pt-12 pb-4 px-6 flex items-center gap-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <button onclick="closeFreePage('admin-ratings')" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:scale-95"><i class="fa-solid fa-arrow-right dark:text-white"></i></button>
+            <h2 class="text-xl font-bold dark:text-white">التقييمات</h2>
+        </header>
+        <div class="p-6 flex-1 overflow-y-auto">
+            <div class="text-center mb-6 bg-yellow-50 dark:bg-yellow-900/20 py-6 rounded-2xl">
+                <div class="text-4xl font-bold text-yellow-500 mb-2" id="avg-rating-text">0.0</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">متوسط التقييم العام</div>
+            </div>
+            <div id="ratings-list" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم: الخدمات -->
+    <div id="admin-services" class="free-page">
+        <header class="pt-12 pb-4 px-6 flex items-center gap-4 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <button onclick="closeFreePage('admin-services')" class="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center active:scale-95"><i class="fa-solid fa-arrow-right dark:text-white"></i></button>
+            <h2 class="text-xl font-bold dark:text-white">إضافة خدمات</h2>
+        </header>
+        <div class="p-6 flex-1 overflow-y-auto">
+            <div class="flex gap-2 mb-6">
+                <input type="text" id="new-service-input" class="flex-1 p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 dark:text-white outline-none" placeholder="اسم الخدمة (مثال: حشوة)">
+                <button id="btn-add-service" class="bg-blue-600 text-white px-5 rounded-xl font-bold">إضافة</button>
+            </div>
+            <div id="admin-services-list" class="grid gap-3"></div>
+        </div>
+    </div>
+
+    <!-- نافذة تسجيل دخول المالك (Modal) -->
+    <div id="modal-admin-login" class="fixed inset-0 bg-black/50 z-[200] hidden items-center justify-center p-6 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl max-w-sm w-full shadow-2xl relative">
+            <button onclick="closeAdminLogin()" class="absolute top-4 left-4 w-8 h-8 bg-gray-100 dark:bg-slate-700 rounded-full flex items-center justify-center dark:text-white"><i class="fa-solid fa-times"></i></button>
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-lock text-2xl text-blue-500"></i></div>
+            <h3 class="text-xl font-bold text-center mb-6 dark:text-white">دخول المالك</h3>
+            <input type="email" id="admin-email" class="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 mb-4 bg-gray-50 dark:bg-slate-900 dark:text-white" placeholder="البريد الإلكتروني" value="mslmalmyaly223@gmail.com" readonly>
+            <input type="password" id="admin-password" class="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 mb-6 bg-gray-50 dark:bg-slate-900 dark:text-white" placeholder="كلمة المرور">
+            <button id="btn-admin-signin" class="w-full bg-slate-900 dark:bg-blue-600 text-white font-bold py-4 rounded-xl mb-2">تسجيل الدخول</button>
+            <button id="btn-admin-signup" class="w-full bg-transparent border border-slate-900 dark:border-blue-600 dark:text-blue-400 font-bold py-4 rounded-xl text-slate-900">إنشاء حساب المالك</button>
+        </div>
+    </div>
+
+    <!-- رسائل التنبيه العائمة (Toast) -->
+    <div id="toast" class="fixed top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl z-[999] opacity-0 transition-opacity duration-300 pointer-events-none flex items-center gap-2">
+        <span id="toast-icon"></span>
+        <span id="toast-text"></span>
+    </div>
+
+    <!-- Firebase Scripts (Modular V11) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // إعدادات فايربيس الخاصة بك
+        const firebaseConfig = {
+            apiKey: "AIzaSyCvHO4btOBvzf_cAYRsrNTGJdCqUbkLzZQ",
+            authDomain: "doctor-3b3e4.firebaseapp.com",
+            projectId: "doctor-3b3e4",
+            storageBucket: "doctor-3b3e4.firebasestorage.app",
+            messagingSenderId: "959260495269",
+            appId: "1:959260495269:web:307f3bbbfeb803e29fec4c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const ADMIN_EMAIL = 'mslmalmyaly223@gmail.com';
+        
+        // استخراج معرف التطبيق (متطلب بيئة Canvas)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'doctor-app';
+
+        // --- State (حالة التطبيق) ---
+        let currentUser = null;
+        let isAdmin = false;
+        let state = {
+            services: [],
+            holidays: [],
+            settings: { startTime: 16, endTime: 21, maxPerSlot: 6 },
+            bookings: [],
+            ratings: [],
+            newBooking: { service: null, date: null, time: null }
+        };
+        let unsubscribes = []; // لمسح الـ Listeners عند تسجيل الخروج
+
+        // --- DOM Elements ---
+        const ui = {
+            loader: document.getElementById('loader'),
+            welcome: document.getElementById('welcome-screen'),
+            appContainer: document.getElementById('app-container'),
+            tabs: document.querySelectorAll('.nav-item'),
+            tabContents: {
+                'tab-book': document.getElementById('tab-book'),
+                'tab-bookings': document.getElementById('tab-bookings'),
+                'tab-settings': document.getElementById('tab-settings'),
+            },
+            headerTitle: document.getElementById('header-title'),
+            headerSubtitle: document.getElementById('header-subtitle')
+        };
+
+        // --- Helper Functions ---
+        const showToast = (msg, isSuccess = true) => {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-text').innerText = msg;
+            document.getElementById('toast-icon').innerHTML = isSuccess ? '<i class="fa-solid fa-check text-green-400"></i>' : '<i class="fa-solid fa-triangle-exclamation text-red-400"></i>';
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+        };
+
+        window.openFreePage = (id) => { document.getElementById(id).style.display = 'flex'; };
+        window.closeFreePage = (id) => { document.getElementById(id).style.display = 'none'; };
+        window.closeAdminLogin = () => { document.getElementById('modal-admin-login').style.display = 'none'; };
+
+        // Theme Toggle
+        const toggleTheme = () => {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            document.getElementById('theme-text').innerText = isDark ? 'الوضع الصباحي' : 'الوضع الليلي';
+            document.getElementById('theme-icon-container').innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+            const knob = document.getElementById('theme-toggle-knob');
+            const bg = document.getElementById('theme-toggle-bg');
+            if(isDark) {
+                knob.style.transform = 'translateX(-24px)';
+                bg.classList.replace('bg-gray-200', 'bg-blue-600');
+            } else {
+                knob.style.transform = 'translateX(0)';
+                bg.classList.replace('bg-blue-600', 'bg-gray-200');
+            }
+        };
+        document.getElementById('btn-toggle-theme').addEventListener('click', toggleTheme);
+
+        // --- Auth Logic ---
+        onAuthStateChanged(auth, (user) => {
+            ui.loader.style.opacity = '0';
+            setTimeout(() => ui.loader.style.display = 'none', 500);
+
+            if (user) {
+                currentUser = user;
+                isAdmin = user.email === ADMIN_EMAIL;
+                
+                ui.welcome.style.display = 'none';
+                ui.appContainer.style.display = 'flex';
+                
+                document.getElementById('btn-admin-panel').style.display = isAdmin ? 'flex' : 'none';
+                document.getElementById('btn-logout').style.display = isAdmin ? 'flex' : 'none';
+
+                // تشغيل عرض التواريخ والخدمات فوراً 
+                renderDates();
+                renderServices();
+
+                setupFirestoreListeners();
+            } else {
+                currentUser = null;
+                isAdmin = false;
+                ui.welcome.style.display = 'flex';
+                ui.appContainer.style.display = 'none';
+                clearListeners();
+            }
+        });
+
+        // زر إنشاء حساب مريض سري
+        document.getElementById('btn-yes-book').addEventListener('click', async () => {
+            try {
+                ui.loader.style.display = 'flex';
+                ui.loader.style.opacity = '1';
+                // فايربيس ينشئ حساب فريد 100% مخفي للمستخدم بدون إيميل وهمي
+                await signInAnonymously(auth); 
+            } catch (error) {
+                showToast("حدث خطأ في النظام", false);
+                ui.loader.style.display = 'none';
+            }
+        });
+
+        // دخول المالك
+        document.getElementById('hidden-admin-btn').addEventListener('click', () => {
+            document.getElementById('modal-admin-login').style.display = 'flex';
+        });
+
+        document.getElementById('btn-admin-signin').addEventListener('click', async () => {
+            const email = document.getElementById('admin-email').value;
+            const pass = document.getElementById('admin-password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                closeAdminLogin();
+                showToast("تم دخول المالك بنجاح");
+            } catch (e) { showToast("كلمة المرور خاطئة", false); }
+        });
+        
+        document.getElementById('btn-admin-signup').addEventListener('click', async () => {
+            const email = document.getElementById('admin-email').value;
+            const pass = document.getElementById('admin-password').value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, pass);
+                closeAdminLogin();
+                showToast("تم إنشاء حساب المالك بنجاح");
+            } catch (e) { showToast("حدث خطأ أو الحساب موجود مسبقاً", false); }
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        // --- Data Fetching (Listeners) ---
+        function clearListeners() {
+            unsubscribes.forEach(unsub => unsub());
+            unsubscribes = [];
+        }
+
+        function setupFirestoreListeners() {
+            if(!currentUser) return;
+            clearListeners();
+
+            const baseRef = collection(db, 'artifacts', appId, 'public', 'data');
+            
+            // 1. Services
+            // 1. Services
+            unsubscribes.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'services'), (snap) => {
+                state.services = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                renderServices();
+                if(isAdmin) renderAdminServices();
+            }, (err) => {
+                showToast("قاعدة البيانات مقفولة! يرجى تعديل Rules", false);
+            }));
+
+            // 2. Settings
+            unsubscribes.push(onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'general'), (doc) => {
+                if(doc.exists()) {
+                    state.settings = doc.data();
+                } else if(isAdmin) {
+                    setDoc(doc.ref, state.settings); // وضع إعدادات افتراضية
+                }
+            }, (err) => console.log(err)));
+
+            // 3. Holidays
+            unsubscribes.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'holidays'), (snap) => {
+                state.holidays = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                if(isAdmin) renderAdminHolidays();
+                renderDates(); // تحديث التواريخ لإخفاء العطل
+            }, (err) => console.log(err)));
+
+            // 4. Bookings
+            unsubscribes.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'bookings'), (snap) => {
+                state.bookings = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                renderMyBookings();
+                if(state.newBooking.date) renderTimes(); // تحديث الساعات المتاحة فوراً
+            }, (err) => console.log(err)));
+
+            // 5. Ratings
+            unsubscribes.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'ratings'), (snap) => {
+                state.ratings = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                if(isAdmin) renderAdminRatings();
+            }, (err) => console.log(err)));
+        }
+
+        // --- UI Rendering ---
+
+        // التبديل بين الأقسام السفلية
+        ui.tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // إيقاف التفعيل عن الكل
+                ui.tabs.forEach(t => {
+                    t.classList.remove('text-blue-600');
+                    t.classList.add('text-gray-400', 'dark:text-gray-500');
+                });
+                Object.values(ui.tabContents).forEach(content => content.classList.add('hidden'));
+                
+                // تفعيل المختار
+                tab.classList.add('text-blue-600');
+                tab.classList.remove('text-gray-400', 'dark:text-gray-500');
+                const target = tab.dataset.target;
+                ui.tabContents[target].classList.remove('hidden');
+
+                // تحديث الهيدر
+                const titles = {
+                    'tab-book': {t: 'حجز موعد', s: 'احجز موعدك بسهولة'},
+                    'tab-bookings': {t: 'حجوزاتي', s: 'تفاصيل مواعيدك القادمة'},
+                    'tab-settings': {t: 'الإعدادات', s: 'التحكم والتخصيص'}
+                };
+                ui.headerTitle.innerText = titles[target].t;
+                ui.headerSubtitle.innerText = titles[target].t; // typo fix => titles[target].s
+
+                // إزالة النقطة الحمراء عند زيارة قسم الحجوزات
+                if(target === 'tab-bookings') {
+                    document.getElementById('nav-bookings-btn').classList.remove('has-notification');
+                }
+            });
+        });
+
+// 1. قسم الحجز
+        function renderServices() {
+            const grid = document.getElementById('services-grid');
+            grid.innerHTML = '';
+            if(state.services.length === 0) {
+                grid.innerHTML = '<div class="col-span-2 text-center p-4 bg-gray-50 dark:bg-slate-800 rounded-xl text-gray-500 border border-dashed border-gray-300 dark:border-slate-600">لا توجد خدمات حالياً. يرجى دخول المالك وإضافة خدمات لتظهر هنا.</div>';
+                return;
+            }
+            state.services.forEach(srv => {
+                const btn = document.createElement('button');
+                // تنسيق مطابق لأزرار الوقت وحجم أصغر
+                btn.className = 'service-btn p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold active:scale-95 transition-all flex flex-col items-center justify-center gap-1';
+                btn.innerHTML = `<i class="fa-solid fa-tooth text-lg text-blue-400"></i><span class="text-sm dark:text-white">${srv.name}</span>`;
+                btn.onclick = () => {
+                    // إزالة التحديد من باقي الخدمات وإضافته للخدمة المحددة
+                    document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-slate-700'));
+                    btn.classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-slate-700');
+                    state.newBooking.service = srv.name;
+                    checkSelectionComplete(); // التأكد من إكمال باقي الاختيارات
+                };
+                grid.appendChild(btn);
+            });
+        }
+
+        // توليد الأيام القادمة (تلقائياً يتخطى أيام الماضي)
+        function renderDates() {
+            const container = document.getElementById('dates-container');
+            container.innerHTML = '';
+            
+            const today = new Date();
+            for(let i = 0; i < 30; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() + i);
+                
+                const dateStr = date.toISOString().split('T')[0]; // yyyy-mm-dd
+                const dayName = date.toLocaleDateString('ar-EG', { weekday: 'short' });
+                const dayNum = date.getDate();
+
+                const btn = document.createElement('button');
+                // تصغير الارتفاع والعرض والخط
+                btn.className = 'date-btn min-w-[60px] h-[70px] flex flex-col items-center justify-center rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all active:scale-95';
+                btn.innerHTML = `<span class="text-[10px] text-gray-500 dark:text-gray-400 mb-1">${dayName}</span><span class="text-lg font-bold dark:text-white">${dayNum}</span>`;
+                
+                btn.onclick = () => {
+                    document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    state.newBooking.date = dateStr;
+                    state.newBooking.time = null; // إعادة تعيين الوقت
+                    checkSelectionComplete(); // تحديث حالة الزر
+                    renderTimes();
+                };
+                container.appendChild(btn);
+            }
+        }
+
+        function renderTimes() {
+            if(!state.newBooking.date) return;
+            
+            const timeArea = document.getElementById('time-selection-area');
+            const grid = document.getElementById('times-grid');
+            const statusMsg = document.getElementById('day-status-msg');
+            
+            // تحقق إذا كان اليوم عطلة
+            const isHoliday = state.holidays.find(h => h.date === state.newBooking.date);
+            if(isHoliday) {
+                statusMsg.innerText = `هذا اليوم عطلة: ${isHoliday.note}`;
+                statusMsg.classList.remove('hidden');
+                timeArea.classList.add('hidden');
+                return;
+            }
+
+            statusMsg.classList.add('hidden');
+            timeArea.classList.remove('hidden');
+            grid.innerHTML = '';
+
+            const sStart = parseInt(state.settings.startTime) || 16;
+            const sEnd = parseInt(state.settings.endTime) || 21;
+            const maxPerSlot = parseInt(state.settings.maxPerSlot) || 6;
+            let allBooked = true;
+
+            for(let i = sStart; i <= sEnd; i++) {
+                const timeStr = `${i}:00`;
+                const displayTime = i > 12 ? `${i-12}:00 م` : (i === 12 ? `12:00 م` : `${i}:00 ص`);
+                
+                // حساب الحجوزات في هذه الساعة
+                const currentSlotBookings = state.bookings.filter(b => b.date === state.newBooking.date && b.time === timeStr).length;
+                const isFull = currentSlotBookings >= maxPerSlot;
+
+                if(!isFull) allBooked = false;
+
+                const btn = document.createElement('button');
+                btn.className = `time-btn p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold transition-all ${isFull ? 'cursor-not-allowed' : 'active:scale-95'}`;
+                btn.innerText = displayTime;
+                
+                if(isFull) {
+                    btn.disabled = true;
+                    btn.innerHTML = `<span class="line-through">${displayTime}</span><div class="text-[10px] text-red-400 mt-1">ممتلئ</div>`;
+                } else {
+                    btn.onclick = () => {
+                        document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        state.newBooking.time = timeStr;
+                        checkSelectionComplete(); // تفعيل زر التالي
+                    };
+                }
+                grid.appendChild(btn);
+            }
+
+            if(allBooked) {
+                statusMsg.innerText = "تم حجز كل الأوقات لهذا اليوم";
+                statusMsg.classList.remove('hidden');
+                timeArea.classList.add('hidden');
+            }
+        }
+
+// دالة للتحقق من إكمال الاختيارات
+        function checkSelectionComplete() {
+            const btnNext = document.getElementById('btn-next-step3');
+            if(state.newBooking.service && state.newBooking.date && state.newBooking.time) {
+                // إذا اختارهم كلهم، افتح القفل عن الزر
+                btnNext.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                btnNext.innerText = 'التالي (إدخال بيانات المريض)';
+            } else {
+                // إذا ناقص شي، اقفل الزر
+                btnNext.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                btnNext.innerText = 'الرجاء اختيار الخدمة والتاريخ والوقت';
+            }
+        }
+
+        // تنقلات خطوات الحجز
+        document.getElementById('btn-next-step3').onclick = () => {
+            document.getElementById('step-1-and-2').classList.add('hidden');
+            document.getElementById('step-3').classList.remove('hidden');
+        };
+        document.getElementById('btn-back-step2').onclick = () => {
+            document.getElementById('step-3').classList.add('hidden');
+            document.getElementById('step-1-and-2').classList.remove('hidden');
+        };
+
+        // تأكيد الحجز
+        document.getElementById('btn-confirm-book').onclick = async () => {
+            const name = document.getElementById('patient-name').value.trim();
+            const phone = document.getElementById('patient-phone').value.trim();
+            
+            if(!name || !phone) return showToast("يرجى إدخال الاسم ورقم الهاتف", false);
+            if(!currentUser) return;
+
+            const btn = document.getElementById('btn-confirm-book');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحجز...';
+            btn.disabled = true;
+
+            try {
+                // حفظ في فايربيس
+                const docRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'bookings'), {
+                    userId: currentUser.uid,
+                    service: state.newBooking.service,
+                    date: state.newBooking.date,
+                    time: state.newBooking.time,
+                    name: name,
+                    phone: phone,
+                    createdAt: serverTimestamp()
+                });
+                
+                // تحديث قائمة الحجوزات محلياً حتى تظهر فوراً بقسم "الحجوزات"
+                state.bookings.push({
+                    id: docRef.id,
+                    userId: currentUser.uid,
+                    service: state.newBooking.service,
+                    date: state.newBooking.date,
+                    time: state.newBooking.time,
+                    name: name,
+                    phone: phone
+                });
+                renderMyBookings();
+
+                showToast("تم الحجز بنجاح!");
+                
+                // إظهار النقطة الحمراء
+                document.getElementById('nav-bookings-btn').classList.add('has-notification');
+                
+// إعادة التهيئة والعودة للبداية
+                document.getElementById('patient-name').value = '';
+                document.getElementById('patient-phone').value = '';
+                state.newBooking = { service: null, date: null, time: null }; // تفريغ الذاكرة
+                
+                // إزالة التحديدات والالوان من الواجهة
+                document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-slate-700'));
+                document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('selected'));
+                document.getElementById('time-selection-area').classList.add('hidden');
+                checkSelectionComplete(); // قفل زر التالي
+                
+                document.getElementById('step-3').classList.add('hidden');
+                document.getElementById('step-1-and-2').classList.remove('hidden'); // إرجاع الواجهة المدموجة
+                
+            } catch (e) {
+                showToast("حدث خطأ، حاول مجدداً", false);
+            } finally {
+                btn.innerHTML = '<span>تأكيد الحجز</span><i class="fa-solid fa-check-circle"></i>';
+                btn.disabled = false;
+            }
+        };
+
+        // 2. قسم حجوزاتي
+        window.cancelBooking = async (id) => {
+            if(!currentUser) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'bookings', id));
+                showToast("تم إلغاء الحجز");
+            } catch(e) { showToast("خطأ في الإلغاء", false); }
+        };
+
+        function renderMyBookings() {
+            if(!currentUser) return;
+            const container = document.getElementById('my-bookings-container');
+            const myB = state.bookings.filter(b => b.userId === currentUser.uid);
+            
+            if(myB.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-gray-500 dark:text-gray-400">
+                    <i class="fa-regular fa-calendar-xmark text-4xl mb-3 opacity-50"></i>
+                    <p>لا توجد حجوزات حالياً</p>
+                </div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            myB.forEach(b => {
+                // Format time for display
+                const hour = parseInt(b.time.split(':')[0]);
+                const displayTime = hour > 12 ? `${hour-12}:00 م` : (hour === 12 ? `12:00 م` : `${hour}:00 ص`);
+
+                const card = document.createElement('div');
+                card.className = 'glass-card p-5 rounded-2xl relative overflow-hidden';
+                card.innerHTML = `
+                    <div class="absolute top-0 right-0 w-2 h-full bg-blue-500"></div>
+                    <div class="flex justify-between items-start mb-3 pl-2 pr-4">
+                        <div>
+                            <h4 class="font-bold text-lg dark:text-white">${b.service}</h4>
+                            <p class="text-sm text-gray-500 dark:text-gray-400"><i class="fa-regular fa-calendar ml-1"></i> ${b.date}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400"><i class="fa-regular fa-clock ml-1"></i> ${displayTime}</p>
+                        </div>
+                        <div class="w-10 h-10 bg-blue-50 dark:bg-slate-800 rounded-full flex justify-center items-center text-blue-500">
+                            <i class="fa-solid fa-tooth"></i>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-slate-800 rounded-xl p-3 mb-3 mr-2 text-sm dark:text-gray-300">
+                        <p><strong>الاسم:</strong> ${b.name}</p>
+                        <p><strong>الهاتف:</strong> ${b.phone}</p>
+                    </div>
+                    <button onclick="cancelBooking('${b.id}')" class="w-full text-red-500 text-sm font-bold py-2 border border-red-200 dark:border-red-900/30 rounded-xl active:bg-red-50 dark:active:bg-red-900/20 transition-colors">
+                        إلغاء الحجز
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 3. قسم التقييم
+        let currentRating = 0;
+        document.querySelectorAll('#star-rating-container i').forEach(star => {
+            star.addEventListener('click', (e) => {
+                currentRating = parseInt(e.target.dataset.val);
+                document.querySelectorAll('#star-rating-container i').forEach(s => {
+                    if(parseInt(s.dataset.val) <= currentRating) {
+                        s.classList.replace('text-gray-300', 'text-yellow-400');
+                    } else {
+                        s.classList.replace('text-yellow-400', 'text-gray-300');
+                    }
+                });
+            });
+        });
+
+        document.getElementById('btn-submit-rating').onclick = async () => {
+            if(currentRating === 0) return showToast("يرجى اختيار التقييم بالنجوم", false);
+            if(!currentUser) return;
+            const comment = document.getElementById('rating-comment').value;
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'ratings'), {
+                    userId: currentUser.uid,
+                    rating: currentRating,
+                    comment: comment,
+                    createdAt: serverTimestamp()
+                });
+                showToast("شكراً لتقييمك!");
+                closeFreePage('page-rating');
+                document.getElementById('rating-comment').value = '';
+                currentRating = 0;
+                document.querySelectorAll('#star-rating-container i').forEach(s => s.classList.replace('text-yellow-400', 'text-gray-300'));
+            } catch(e) { showToast("حدث خطأ", false); }
+        };
+
+        // --- لوحة تحكم المالك (Admin Functions) ---
+
+        // أ. الخدمات
+        function renderAdminServices() {
+            const list = document.getElementById('admin-services-list');
+            list.innerHTML = '';
+            state.services.forEach(s => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center p-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700">
+                        <span class="font-bold dark:text-white">${s.name}</span>
+                        <button onclick="deleteService('${s.id}')" class="text-red-500 w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center"><i class="fa-solid fa-trash"></i></button>
+                    </div>`;
+            });
+        }
+        document.getElementById('btn-add-service').onclick = async () => {
+            const val = document.getElementById('new-service-input').value.trim();
+            if(!val) return;
+            try {
+                const docRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'services'), { name: val });
+                
+                // تحديث الواجهة والخدمات محلياً وفورياً
+                state.services.push({ id: docRef.id, name: val });
+                renderServices();
+                if(isAdmin) renderAdminServices();
+
+                document.getElementById('new-service-input').value = '';
+                showToast("تم إضافة الخدمة");
+            } catch(e) {
+                // إذا اكو مشكلة بالفايربيس راح يظهر هذا الخطأ
+                showToast("خطأ: تأكد من قواعد الفايربيس (Rules)", false);
+            }
+        };
+        window.deleteService = async (id) => {
+            if(confirm("حذف هذه الخدمة؟")) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'services', id));
+            }
+        };
+
+        // ب. العطل
+        function renderAdminHolidays() {
+            const list = document.getElementById('holidays-list');
+            list.innerHTML = '';
+            state.holidays.forEach(h => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center p-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700">
+                        <div>
+                            <span class="font-bold dark:text-white text-sm bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-1 rounded-md ml-2">${h.date}</span>
+                            <span class="text-sm dark:text-gray-300">${h.note}</span>
+                        </div>
+                        <button onclick="deleteHoliday('${h.id}')" class="text-red-500 w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center"><i class="fa-solid fa-trash"></i></button>
+                    </div>`;
+            });
+        }
+        document.getElementById('btn-add-holiday').onclick = async () => {
+            const date = document.getElementById('holiday-date').value;
+            const note = document.getElementById('holiday-note').value.trim() || 'عطلة';
+            if(!date) return showToast("اختر التاريخ", false);
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'holidays'), { date, note });
+                showToast("تمت إضافة العطلة");
+            } catch(e) {}
+        };
+        window.deleteHoliday = async (id) => {
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'holidays', id));
+        };
+
+        // ج. الإعدادات (الأوقات)
+        document.getElementById('btn-save-settings').onclick = async () => {
+            const start = document.getElementById('setting-start-time').value;
+            const end = document.getElementById('setting-end-time').value;
+            const max = document.getElementById('setting-max-per-slot').value;
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'general'), {
+                    startTime: Number(start),
+                    endTime: Number(end),
+                    maxPerSlot: Number(max)
+                });
+                showToast("تم حفظ الإعدادات وستطبق فوراً");
+            } catch(e) {showToast("خطأ", false)}
+        };
+
+        // تعبئة حقول الإعدادات عند فتحها
+        document.querySelector('[onclick="openFreePage(\'admin-times\')"]').addEventListener('click', () => {
+            document.getElementById('setting-start-time').value = state.settings.startTime || 16;
+            document.getElementById('setting-end-time').value = state.settings.endTime || 21;
+            document.getElementById('setting-max-per-slot').value = state.settings.maxPerSlot || 6;
+        });
+
+        // د. التقييمات
+        function renderAdminRatings() {
+            const list = document.getElementById('ratings-list');
+            list.innerHTML = '';
+            
+            if(state.ratings.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-500">لا توجد تقييمات بعد</p>';
+                document.getElementById('avg-rating-text').innerText = '0.0';
+                return;
+            }
+
+            let sum = 0;
+            state.ratings.forEach(r => {
+                sum += r.rating;
+                let starsHTML = '';
+                for(let i=0; i<5; i++) {
+                    starsHTML += `<i class="fa-solid fa-star ${i < r.rating ? 'text-yellow-400' : 'text-gray-200'}"></i>`;
+                }
+                list.innerHTML += `
+                    <div class="p-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="text-sm text-gray-400"><i class="fa-solid fa-user"></i> مريض</div>
+                            <div class="text-sm flex gap-1">${starsHTML}</div>
+                        </div>
+                        ${r.comment ? `<p class="text-sm dark:text-gray-300 bg-gray-50 dark:bg-slate-700 p-3 rounded-lg mt-2">${r.comment}</p>` : ''}
+                    </div>`;
+            });
+            
+            const avg = (sum / state.ratings.length).toFixed(1);
+            document.getElementById('avg-rating-text').innerText = avg;
+        }
+
+    </script>
+</body>
+</html>
