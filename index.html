@@ -647,16 +647,24 @@
             }
         });
 
-        // زر إنشاء حساب مريض سري
+// زر إنشاء حساب مريض سري (باستخدام حساب وهمي فريد مستحيل يتكرر)
         document.getElementById('btn-yes-book').addEventListener('click', async () => {
             try {
                 ui.loader.style.display = 'flex';
                 ui.loader.style.opacity = '1';
-                // فايربيس ينشئ حساب فريد 100% مخفي للمستخدم بدون إيميل وهمي
-                await signInAnonymously(auth); 
+                
+                // توليد كود فريد 100% (يعتمد على الوقت بالملي ثانية + رقم عشوائي)
+                const uniqueTime = Date.now().toString(36);
+                const randomStr = Math.random().toString(36).substring(2, 8);
+                const randomEmail = `patient_${uniqueTime}_${randomStr}@clinic.com`;
+                const randomPass = `Pass_${uniqueTime}XyZ!`;
+                
+                // إنشاء الحساب وتسجيل الدخول مباشرة
+                await createUserWithEmailAndPassword(auth, randomEmail, randomPass); 
             } catch (error) {
-                showToast("حدث خطأ في النظام", false);
+                showToast("حدث خطأ في النظام، حاول مجدداً", false);
                 ui.loader.style.display = 'none';
+                console.error(error);
             }
         });
 
